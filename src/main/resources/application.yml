@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: order-service
+
+  # Database Configuration
+  datasource:
+    url: jdbc:h2:mem:orderdb
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    ssl:
+      enabled: false # Enable for production
+    connection-timeout: 5000
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-attempts: 3
+        max-interval: 10000
+        multiplier: 2.0
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 5000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 2.0
+        default-requeue-rejected: false
+        acknowledge-mode: manual
+        prefetch: 1
+
+# Server Configuration
+server:
+  port: 8080
+  shutdown: graceful
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    rabbit:
+      enabled: true
+
+# Application specific configurations
+app:
+  rabbitmq:
+    exchanges:
+      command: service.command
+      event: service.event
+      broadcast: service.broadcast
+      deadletter: service.deadletter
+      logging: service.logging
+    queues:
+      orders:
+        command: orders.command.queue
+        event: orders.event.queue
+        broadcast: orders.broadcast.queue
+        deadletter: orders.deadletter.queue
+    routing-keys:
+      orders:
+        command: orders.command
+        event: orders.event
+        broadcast: orders.broadcast

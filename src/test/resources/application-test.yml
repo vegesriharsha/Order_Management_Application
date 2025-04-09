@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: order-service-test
+
+  # Disable RabbitMQ auto-configuration completely
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitReactiveAutoConfiguration
+
+  # Database Configuration - Use H2 in-memory database for tests
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  # RabbitMQ Configuration - Just placeholders, no actual connections in tests
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: false
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+        prefetch: 1
+    ssl:
+      enabled: false
+    template:
+      retry:
+        enabled: false
+
+# Application specific configurations for tests
+app:
+  rabbitmq:
+    exchanges:
+      command: service.command.test
+      event: service.event.test
+      broadcast: service.broadcast.test
+      deadletter: service.deadletter.test
+      logging: service.logging.test
+    queues:
+      orders:
+        command: orders.command.queue.test
+        event: orders.event.queue.test
+        broadcast: orders.broadcast.queue.test
+        deadletter: orders.deadletter.queue.test
+    routing-keys:
+      orders:
+        command: orders.command.test
+        event: orders.event.test
+        broadcast: orders.broadcast.test
+
+# Disable RabbitMQ health check
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    rabbit:
+      enabled: false
+
+# Logging configuration
+logging:
+  level:
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.example.eventdriven: INFO

@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: order-service-integration-test
+
+  # Database Configuration - Use H2 in-memory database for tests
+  datasource:
+    url: jdbc:h2:mem:integrationdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  # RabbitMQ Configuration - Will be dynamically overridden by TestContainers
+  rabbitmq:
+    # These properties will be overridden by @DynamicPropertySource in test classes
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+        prefetch: 1
+        retry:
+          enabled: true
+          max-attempts: 1   # Less retries in tests
+    template:
+      retry:
+        enabled: true
+        max-attempts: 1     # Less retries in tests
+
+# Application specific configurations for integration tests
+app:
+  rabbitmq:
+    exchanges:
+      command: service.command.integration
+      event: service.event.integration
+      broadcast: service.broadcast.integration
+      deadletter: service.deadletter.integration
+      logging: service.logging.integration
+    queues:
+      orders:
+        command: orders.command.queue.integration
+        event: orders.event.queue.integration
+        broadcast: orders.broadcast.queue.integration
+        deadletter: orders.deadletter.queue.integration
+    routing-keys:
+      orders:
+        command: orders.command.integration
+        event: orders.event.integration
+        broadcast: orders.broadcast.integration
+
+# Logging - Reduce noise in integration tests
+logging:
+  level:
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.example.eventdriven: INFO
+    org.testcontainers: INFO
+
+# Disable most actuator endpoints for integration tests
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
